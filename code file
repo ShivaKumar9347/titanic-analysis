@@ -1,0 +1,127 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun 29 12:21:31 2025
+
+@author: shiva
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn import metrics
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+
+data = pd.read_csv("C:/Users/shiva/Downloads/titanic.csv")
+print(data)
+
+print("Descriptive Summery: \n",data.info())#Desciptive analysis
+#it shows that no of entries and data types of columns
+
+print("Statistical Summary: \n",data.describe())#Statistical analysis 
+#it give the statistical information like count mean standard deviation etc...
+
+print("Null Values: \n",data.isnull().sum())
+#There is no null values
+
+print("Unique values: \n",data.nunique())
+
+print(data['Survived'].unique())#unique values of Survived column
+
+print(data['Sex'].unique())
+
+#visualization
+#count plot of Males and Females
+sns.countplot(data=data,x='Sex',palette='viridis')
+plt.title("No of Males and Females")
+plt.show()
+#Here Males are more than 500 and Females are more than 300
+
+#Histogram
+sns.histplot(data=data,x='Age',bins=20,kde=True,palette='pastel')
+plt.title("Distribution of Age")
+plt.show()
+#Here from 0 to 20 age it is increases than 20 to 30 age it is max and from 30 it decreases gradually
+
+
+#Heatmap
+numerical_data = data.select_dtypes(include=['number'])
+corr_matr = numerical_data.corr()  
+print(corr_matr)
+
+sns.heatmap(corr_matr,annot=True,cmap='coolwarm',fmt='.2f')
+plt.show()
+
+
+#boxplot
+sns.boxplot(data=data,x='Pclass',y='Siblings/Spouses Aboard',palette='pastel')
+plt.show()
+
+
+sns.boxplot(data=data,x='Pclass',y='Parents/Children Aboard',palette='pastel')
+plt.show()
+
+
+#Pairplot
+sns.pairplot(data=data,hue='Sex',palette='viridis')
+plt.show()
+
+#Handling the outliers
+
+Q1 = data['Siblings/Spouses Aboard'].quantile(0.25)
+Q3 = data['Siblings/Spouses Aboard'].quantile(0.75)
+IQR = Q3 - Q1
+lower_limit = Q1-1.5*IQR
+upper_limit = Q3+1.5*IQR
+outliers = data[(data['Siblings/Spouses Aboard'] < lower_limit ) | (data['Siblings/Spouses Aboard'] > upper_limit)]
+print("Outliers of Siblings/Spouses Aboard ",outliers)
+upper = np.where(data['Siblings/Spouses Aboard'] >= (Q3+1.5*IQR))
+lower = np.where(data['Siblings/Spouses Aboard'] <= (Q1-1.5*IQR))
+data.drop(upper[0],inplace=True)
+data.drop(lower[0],inplace=True)
+
+
+print(data.head(20))
+
+#removing names columns
+data.drop('Name',axis=1,inplace=True)
+print(data.columns)
+
+#ml
+label_encoder = LabelEncoder()
+data['sex'] = label_encoder.fit_transform(data['Sex'])
+
+for i, class_label in enumerate(label_encoder.classes_):
+    print(f"{i} → {class_label}")
+
+data.drop("Sex",axis=1,inplace=True)
+X = data.drop(labels=["Survived"], axis=1)
+Y = data['Survived']
+
+print(X.columns)
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+#KNeighborsClassifier
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("NeighbourClassifier Accuracy:", accuracy_score(y_test, y_pred))
+
+#DecisionTreeClassifier
+dtree = DecisionTreeClassifier(max_depth=3, random_state=42)
+dtree.fit(X_train, y_train)
+y_pred_tree = dtree.predict(X_test)
+print("DecisionTreeClassifier Accuracy:", accuracy_score(y_test, y_pred_tree))
+print("\nClassification Report:\n", classification_report(y_test, y_pred_tree))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred_tree))
+
+
